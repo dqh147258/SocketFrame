@@ -22,7 +22,7 @@ public class Main {
             @Override
             public void helloWorld() {
                 Log.d("hello world !");
-                mClientCallback.interesting();
+                mClientCallback.reply();
             }
         });
         mClientCallback = serverInterfaceHandler.getCallback();
@@ -33,8 +33,8 @@ public class Main {
 
         ClientInterfaceHandler<ServerInterface, ClientCallback> clientInterfaceHandler = new ClientInterfaceHandler(ServerInterface.class, new ClientCallback() {
             @Override
-            public void interesting() {
-                Log.d(TAG, "interesting");
+            public void reply() {
+                Log.d(TAG, "reply");
             }
         });
         final ServerInterface serverInterface = clientInterfaceHandler.getInterface();

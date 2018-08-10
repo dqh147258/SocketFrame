@@ -7,6 +7,6 @@ import java.util.Map;
 @SocketInterface
 public interface ClientCallback {
 
-    void interesting(String string);
+    void reply(String string);
 
 }

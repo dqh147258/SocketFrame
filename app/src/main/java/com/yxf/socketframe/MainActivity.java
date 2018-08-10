@@ -8,33 +8,41 @@ import com.yxf.interfaces.ClientCallback;
 import com.yxf.interfaces.ServerInterface;
 import com.yxf.socketframe.handler.ClientInterfaceHandler;
 import com.yxf.socketframe.handler.ServerInterfaceHandler;
-import com.yxf.socketframe.handler.PacketHandler;
 
-public class MainActivity extends AppCompatActivity implements ServerInterface {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private ClientCallback mClientCallback;
+    private ServerInterface mServerInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ServerInterfaceHandler<ServerInterface, ClientCallback> serverInterfaceHandler = new ServerInterfaceHandler<ServerInterface, ClientCallback>(ClientCallback.class, this);
+        ServerInterfaceHandler<ServerInterface, ClientCallback> serverInterfaceHandler = new ServerInterfaceHandler<ServerInterface, ClientCallback>(ClientCallback.class, new ServerInterface() {
+            @Override
+            public void helloWorld(int time) {
+                for (int i = 0; i < time; i++) {
+                    Log.d(TAG, "Hello world !");
+                }
+                mClientCallback.reply("Nice to meet you !");
+            }
+        });
         mClientCallback = serverInterfaceHandler.getCallback();
-        SocketServer socketServer = new SocketServer.Builder(12345)
+        final SocketServer socketServer = new SocketServer.Builder(12345)
                 .setPacketHandler(serverInterfaceHandler)
                 .create();
         socketServer.start();
 
         ClientInterfaceHandler<ServerInterface, ClientCallback> clientInterfaceHandler = new ClientInterfaceHandler<ServerInterface, ClientCallback>(ServerInterface.class, new ClientCallback() {
             @Override
-            public void interesting(String string) {
-                Log.d(TAG, string + " interesting");
+            public void reply(String string) {
+                Log.d(TAG, string);
             }
         });
-        final ServerInterface serverInterface = clientInterfaceHandler.getInterface();
-        SocketClient socketClient = new SocketClient.Builder("127.0.0.1", 12345)
+        mServerInterface = clientInterfaceHandler.getInterface();
+        final SocketClient socketClient = new SocketClient.Builder("127.0.0.1", 12345)
                 .setPacketHandler(clientInterfaceHandler)
                 .create();
         socketClient.start();
@@ -42,17 +50,18 @@ public class MainActivity extends AppCompatActivity implements ServerInterface {
         getWindow().getDecorView().postDelayed(new Runnable() {
             @Override
             public void run() {
-                serverInterface.helloWorld(5);
+                mServerInterface.helloWorld(5);
             }
         }, 4000);
 
-    }
-
-    @Override
-    public void helloWorld(int count) {
-        for (int i = 0; i < count; i++) {
-            Log.d(TAG, "hello world !");
-        }
-        mClientCallback.interesting("you are");
+        getWindow().getDecorView().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                socketServer.stop();
+                socketClient.stop();
+            }
+        }, 8000);
+        socketServer.stop();
+        socketClient.stop();
     }
 }
